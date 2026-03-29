@@ -76,6 +76,7 @@ export default function AdminDashboard() {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [recruits, setRecruits] = useState<any[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
   const [stats, setStats] = useState({ guildWins: 152, activeMembers: 450, yearsOfGlory: 8 });
   const [editStats, setEditStats] = useState({ guildWins: 152, activeMembers: 450, yearsOfGlory: 8 });
   const [videos, setVideos] = useState<any[]>([]);
@@ -125,10 +126,16 @@ export default function AdminDashboard() {
       setVideos(data.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
     });
 
+    const unsubscribeUsers = onSnapshot(collection(db, 'users'), (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setUsers(data);
+    });
+
     return () => {
       unsubscribeRecruits();
       unsubscribeStats();
       unsubscribeVideos();
+      unsubscribeUsers();
     };
   }, [isLoggedIn]);
 
@@ -188,6 +195,16 @@ export default function AdminDashboard() {
         console.error(error);
         alert('Erro ao apagar alistamentos.');
       }
+    }
+  };
+
+  const handleToggleRole = async (userId: string, currentRole: string) => {
+    try {
+      const newRole = currentRole === 'admin' ? 'user' : 'admin';
+      await updateDoc(doc(db, 'users', userId), { role: newRole });
+    } catch (error) {
+      console.error(error);
+      alert('Erro ao atualizar permissões do usuário.');
     }
   };
 
@@ -274,6 +291,7 @@ export default function AdminDashboard() {
             {[
               { id: 'overview', label: 'Visão Geral', icon: LayoutDashboard },
               { id: 'recruitment', label: 'Recrutamento', icon: Users },
+              { id: 'users', label: 'Usuários', icon: Shield },
               { id: 'stats', label: 'Estatísticas CS', icon: Trophy },
               { id: 'content', label: 'Conteúdo', icon: Video },
               { id: 'settings', label: 'Configurações', icon: Settings },
@@ -294,6 +312,55 @@ export default function AdminDashboard() {
           </div>
 
           <AnimatePresence mode="wait">
+            {activeTab === 'users' && (
+              <motion.div
+                key="users"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="bg-brand-card border border-brand-wine/20 rounded-xl overflow-hidden"
+              >
+                <div className="p-6 border-b border-brand-wine/20">
+                  <h3 className="font-bold text-sm uppercase tracking-widest text-brand-orange">Gerenciar Usuários</h3>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-brand-wine/10">
+                        <th className="px-6 py-4">Usuário</th>
+                        <th className="px-6 py-4">Email</th>
+                        <th className="px-6 py-4">Role</th>
+                        <th className="px-6 py-4 text-right">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {users.map((user) => (
+                        <tr key={user.id} className="border-b border-brand-wine/5 hover:bg-white/5 transition-colors">
+                          <td className="px-6 py-4 text-sm font-bold text-white">{user.displayName || 'Sem nome'}</td>
+                          <td className="px-6 py-4 text-xs text-gray-400">{user.email}</td>
+                          <td className="px-6 py-4">
+                            <span className={`text-[10px] px-2 py-1 rounded font-bold uppercase tracking-tighter border ${
+                              user.role === 'admin' ? 'bg-brand-orange/20 text-brand-orange border-brand-orange/20' : 'bg-gray-800 text-gray-400 border-gray-700'
+                            }`}>
+                              {user.role}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <button 
+                              onClick={() => handleToggleRole(user.id, user.role)}
+                              className="text-xs font-bold text-brand-orange hover:text-white transition-all uppercase tracking-widest"
+                            >
+                              {user.role === 'admin' ? 'Remover Admin' : 'Tornar Admin'}
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </motion.div>
+            )}
+
             {activeTab === 'recruitment' && (
               <motion.div
                 key="recruitment"
