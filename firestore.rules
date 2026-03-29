@@ -56,8 +56,8 @@ service cloud.firestore {
       return hasOnlyAllowedFields(['userId', 'user', 'whatsapp', 'charAttack', 'missionAttack', 'charDefense', 'missionDefense', 'charUp', 'charBoss', 'status', 'createdAt']) &&
              isValidString('userId', 1, 100) &&
              isValidString('user', 1, 100) &&
-             isValidString('whatsapp', 1, 50) &&
-             isValidString('charAttack', 1, 50) &&
+             isValidOptionalString('whatsapp', 50) &&
+             isValidOptionalString('charAttack', 50) &&
              isValidOptionalString('missionAttack', 100) &&
              isValidOptionalString('charDefense', 100) &&
              isValidOptionalString('missionDefense', 100) &&

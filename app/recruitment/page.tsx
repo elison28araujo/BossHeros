@@ -101,8 +101,8 @@ export default function RecruitmentPage() {
       
       setSuccess(true);
     } catch (err) {
-      console.error(err);
-      setError('Erro ao enviar alistamento. Tente novamente.');
+      console.error("Erro detalhado:", err);
+      setError(`Erro ao enviar alistamento: ${err instanceof Error ? err.message : 'Tente novamente.'}`);
     } finally {
       setLoading(false);
     }
