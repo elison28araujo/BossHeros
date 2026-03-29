@@ -11,7 +11,8 @@ import {
   LogIn, 
   Mic2,
   Trophy,
-  Shield
+  Shield,
+  Settings
 } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -22,6 +23,7 @@ const Sidebar = () => {
     { name: 'Início', icon: Home, href: '/' },
     { name: 'Estatísticas CS', icon: BarChart2, href: '/stats' },
     { name: 'Vídeos', icon: Video, href: '/videos' },
+    { name: 'Painel Admin', icon: Settings, href: '/admin' },
   ];
 
   return (
