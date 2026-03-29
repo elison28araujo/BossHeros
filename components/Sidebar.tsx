@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
@@ -13,20 +13,50 @@ import {
   Trophy,
   Shield,
   Settings,
-  UserCircle
+  UserCircle,
+  LogOut
 } from 'lucide-react';
 import { motion } from 'motion/react';
+import { auth, db, onAuthStateChanged, collection, getDocs, signOut } from '@/firebase';
 
 const Sidebar = () => {
   const pathname = usePathname();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        setIsLoggedIn(true);
+        // Check role
+        const userDoc = await getDocs(collection(db, 'users'));
+        const currentUser = userDoc.docs.find(d => d.id === user.uid)?.data();
+        
+        if (currentUser?.role === 'admin' || user.email === 'elison28araujo@gmail.com') {
+          setIsAdmin(true);
+        } else {
+          setIsAdmin(false);
+        }
+      } else {
+        setIsLoggedIn(false);
+        setIsAdmin(false);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   const menuItems = [
     { name: 'Início', icon: Home, href: '/' },
     { name: 'Estatísticas CS', icon: BarChart2, href: '/stats' },
     { name: 'Vídeos', icon: Video, href: '/videos' },
     { name: 'Meu Perfil', icon: UserCircle, href: '/profile' },
-    { name: 'Painel Admin', icon: Settings, href: '/admin' },
+    ...(isAdmin ? [{ name: 'Painel Admin', icon: Settings, href: '/admin' }] : []),
   ];
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    window.location.href = '/';
+  };
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-72 bg-brand-dark border-r border-brand-wine/30 flex flex-col z-50">
@@ -52,12 +82,19 @@ const Sidebar = () => {
           <Mic2 className="w-4 h-4" />
           ACESSAR TEAMSPEAK
         </button>
-        <Link href="/login" className="block">
-          <button className="w-full py-3 bg-brand-wine/20 border border-brand-red/30 rounded text-brand-red font-bold text-sm flex items-center justify-center gap-2 hover:bg-brand-wine/40 transition-all">
-            <LogIn className="w-4 h-4" />
-            ENTRAR NA MINHA CONTA
+        {!isLoggedIn ? (
+          <Link href="/login" className="block">
+            <button className="w-full py-3 bg-brand-wine/20 border border-brand-red/30 rounded text-brand-red font-bold text-sm flex items-center justify-center gap-2 hover:bg-brand-wine/40 transition-all">
+              <LogIn className="w-4 h-4" />
+              ENTRAR NA MINHA CONTA
+            </button>
+          </Link>
+        ) : (
+          <button onClick={handleLogout} className="w-full py-3 bg-brand-wine/20 border border-brand-red/30 rounded text-brand-red font-bold text-sm flex items-center justify-center gap-2 hover:bg-brand-wine/40 transition-all">
+            <LogOut className="w-4 h-4" />
+            SAIR DA CONTA
           </button>
-        </Link>
+        )}
         <Link href="/recruitment" className="block">
           <button className="w-full py-3 bg-brand-orange border border-brand-orange rounded text-white font-bold text-sm flex items-center justify-center gap-2 hover:scale-105 transition-all gamer-glow">
             <UserPlus className="w-4 h-4" />
