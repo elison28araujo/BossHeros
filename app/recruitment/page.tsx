@@ -75,6 +75,18 @@ export default function RecruitmentPage() {
       return;
     }
     
+    // Validate required fields
+    if (!formData.user || !formData.whatsapp || !formData.charAttack || !formData.charDefense || !formData.charUp || !formData.charBoss) {
+      setError('Por favor, preencha todos os campos obrigatórios.');
+      return;
+    }
+
+    // Validate WhatsApp (only numbers)
+    if (!/^\d+$/.test(formData.whatsapp)) {
+      setError('O campo WhatsApp deve conter apenas números.');
+      return;
+    }
+    
     if (!formData.acceptRules) {
       setError('Você precisa aceitar as regras para continuar.');
       return;
