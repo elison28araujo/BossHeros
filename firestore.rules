@@ -53,7 +53,7 @@ service cloud.firestore {
     }
     
     function isValidRecruit() {
-      return hasOnlyAllowedFields(['userId', 'user', 'whatsapp', 'charAttack', 'missionAttack', 'charDefense', 'missionDefense', 'charUp', 'charBoss', 'status', 'createdAt']) &&
+      return hasOnlyAllowedFields(['userId', 'user', 'whatsapp', 'charAttack', 'missionAttack', 'charDefense', 'missionDefense', 'charUp', 'charBoss', 'status', 'createdAt', 'receiveVideos']) &&
              isValidString('userId', 1, 100) &&
              isValidString('user', 1, 100) &&
              isValidOptionalString('whatsapp', 50) &&
@@ -63,6 +63,7 @@ service cloud.firestore {
              isValidOptionalString('missionDefense', 100) &&
              isValidOptionalString('charUp', 100) &&
              isValidOptionalString('charBoss', 100) &&
+             request.resource.data.receiveVideos is bool &&
              request.resource.data.status in ['Pendente', 'Aprovado', 'Reprovado'] &&
              request.resource.data.createdAt is string;
     }
