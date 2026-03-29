@@ -7,7 +7,7 @@ import { motion } from 'motion/react';
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen bg-brand-dark flex items-center justify-center p-6 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]">
+    <div className="min-h-screen bg-brand-dark flex items-center justify-center p-6 bg-carbon">
       <div className="w-full max-w-md">
         {/* Back Link */}
         <Link href="/" className="inline-flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-brand-orange transition-colors uppercase tracking-widest mb-8">

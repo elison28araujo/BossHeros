@@ -46,7 +46,7 @@ export default function RecruitmentPage() {
   const handleBack = () => setStep(s => Math.max(s - 1, 1));
 
   return (
-    <div className="min-h-screen bg-brand-dark flex items-center justify-center p-6 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]">
+    <div className="min-h-screen bg-brand-dark flex items-center justify-center p-6 bg-carbon">
       <div className="w-full max-w-3xl">
         {/* Header */}
         <div className="text-center mb-12">

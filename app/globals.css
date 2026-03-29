@@ -47,3 +47,8 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #8b0000;
 }
+
+/* Background helper */
+.bg-carbon {
+  background-color: #111;
+}
