@@ -1,9 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { Trophy, Shield, User, Star, TrendingUp, Award } from 'lucide-react';
 import { motion } from 'motion/react';
+import { db, doc, onSnapshot } from '@/firebase';
 
 const RankingTable = ({ title, data }: { title: string, data: any[] }) => (
   <div className="bg-brand-card border border-brand-wine/20 rounded-xl overflow-hidden">
@@ -56,8 +57,19 @@ const RankingTable = ({ title, data }: { title: string, data: any[] }) => (
 );
 
 export default function StatsPage() {
+  const [globalStats, setGlobalStats] = useState({ guildWins: 152, activeMembers: 450, yearsOfGlory: 8 });
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(doc(db, 'stats', 'global'), (snapshot) => {
+      if (snapshot.exists()) {
+        setGlobalStats(snapshot.data() as any);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
   const guildRanking = [
-    { name: 'ALLYFENIX', wins: 152, type: 'guild' },
+    { name: 'BOSSHERAS', wins: globalStats.guildWins, type: 'guild' },
     { name: 'LEGENDS_MU', wins: 124, type: 'guild' },
     { name: 'DARK_SOULS', wins: 98, type: 'guild' },
     { name: 'VALHALLA', wins: 85, type: 'guild' },
@@ -65,7 +77,7 @@ export default function StatsPage() {
   ];
 
   const gmRanking = [
-    { name: 'GM_FENIX', wins: 84, type: 'player' },
+    { name: 'GM_BOSSHERAS', wins: 84, type: 'player' },
     { name: 'LORD_DARK', wins: 62, type: 'player' },
     { name: 'ZEUS_MU', wins: 55, type: 'player' },
     { name: 'ARTEMIS', wins: 48, type: 'player' },
@@ -96,7 +108,7 @@ export default function StatsPage() {
         <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
             { pos: 2, name: 'LEGENDS_MU', wins: 124, color: 'border-gray-400' },
-            { pos: 1, name: 'ALLYFENIX', wins: 152, color: 'border-brand-orange', highlight: true },
+            { pos: 1, name: 'BOSSHERAS', wins: globalStats.guildWins, color: 'border-brand-orange', highlight: true },
             { pos: 3, name: 'DARK_SOULS', wins: 98, color: 'border-orange-800' },
           ].map((item, idx) => (
             <motion.div
@@ -141,7 +153,7 @@ export default function StatsPage() {
             {[2025, 2024, 2023, 2022, 2021, 2020].map((year) => (
               <div key={year} className="p-4 bg-white/5 rounded border border-white/10 text-center hover:border-brand-orange/30 transition-all cursor-default">
                 <div className="text-xs font-bold text-gray-500 mb-1">{year}</div>
-                <div className="text-sm font-black text-brand-red">ALLYFENIX</div>
+                <div className="text-sm font-black text-brand-red">BOSSHERAS</div>
               </div>
             ))}
           </div>

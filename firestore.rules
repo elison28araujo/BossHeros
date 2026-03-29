@@ -1,0 +1,132 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         (request.auth.token.email == "elison28araujo@gmail.com" && request.auth.token.email_verified == true));
+    }
+    
+    function hasOnlyAllowedFields(allowedFields) {
+      return request.resource.data.keys().hasOnly(allowedFields);
+    }
+    
+    function isValidString(field, minLen, maxLen) {
+      return field in request.resource.data && 
+             request.resource.data[field] is string && 
+             request.resource.data[field].size() >= minLen && 
+             request.resource.data[field].size() <= maxLen;
+    }
+
+    function isValidOptionalString(field, maxLen) {
+      return !(field in request.resource.data) || 
+             (request.resource.data[field] is string && 
+              request.resource.data[field].size() <= maxLen);
+    }
+    
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+    
+    function isValidUser() {
+      return hasOnlyAllowedFields(['uid', 'email', 'role', 'displayName', 'photoUrl', 'createdAt']) &&
+             isValidString('uid', 1, 100) &&
+             isValidString('email', 5, 100) &&
+             request.resource.data.role in ['admin', 'user'] &&
+             isValidOptionalString('displayName', 100) &&
+             isValidOptionalString('photoUrl', 200000) &&
+             request.resource.data.createdAt is string;
+    }
+    
+    function isValidRecruit() {
+      return hasOnlyAllowedFields(['userId', 'user', 'whatsapp', 'charAttack', 'missionAttack', 'charDefense', 'missionDefense', 'charUp', 'charBoss', 'status', 'createdAt']) &&
+             isValidString('userId', 1, 100) &&
+             isValidString('user', 1, 100) &&
+             isValidString('whatsapp', 1, 50) &&
+             isValidString('charAttack', 1, 50) &&
+             isValidOptionalString('missionAttack', 100) &&
+             isValidOptionalString('charDefense', 100) &&
+             isValidOptionalString('missionDefense', 100) &&
+             isValidOptionalString('charUp', 100) &&
+             isValidOptionalString('charBoss', 100) &&
+             request.resource.data.status in ['Pendente', 'Aprovado', 'Reprovado'] &&
+             request.resource.data.createdAt is string;
+    }
+    
+    function isValidVideo() {
+      return hasOnlyAllowedFields(['title', 'url', 'thumbnail', 'authorId', 'authorName', 'createdAt']) &&
+             isValidString('title', 1, 200) &&
+             isValidString('url', 1, 1000) &&
+             isValidOptionalString('thumbnail', 1000) &&
+             isValidString('authorId', 1, 100) &&
+             isValidString('authorName', 1, 100) &&
+             request.resource.data.createdAt is string;
+    }
+    
+    function isValidStat() {
+      return hasOnlyAllowedFields(['guildWins', 'activeMembers', 'yearsOfGlory']) &&
+             request.resource.data.guildWins is number &&
+             request.resource.data.activeMembers is number &&
+             request.resource.data.yearsOfGlory is number;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+    
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isAuthenticated() && 
+                    isOwner(userId) && 
+                    isValidUser() && 
+                    request.resource.data.uid == userId &&
+                    (request.resource.data.role == 'user' || isAdmin());
+      allow update: if isAuthenticated() && 
+                    isValidUser() && 
+                    request.resource.data.uid == resource.data.uid &&
+                    ((isOwner(userId) && request.resource.data.role == resource.data.role) || isAdmin());
+    }
+    
+    match /recruits/{recruitId} {
+      allow read: if isAuthenticated() && (request.auth.uid == resource.data.userId || isAdmin());
+      allow create: if isAuthenticated() && 
+                    isValidRecruit() && 
+                    request.resource.data.userId == request.auth.uid &&
+                    request.resource.data.status == 'Pendente';
+      allow update: if isAdmin() && isValidRecruit();
+      allow delete: if isAdmin();
+    }
+    
+    match /videos/{videoId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && 
+                    isValidVideo() && 
+                    request.resource.data.authorId == request.auth.uid;
+      allow update: if isAuthenticated() && 
+                    isValidVideo() && 
+                    request.resource.data.authorId == resource.data.authorId &&
+                    (request.resource.data.authorId == request.auth.uid || isAdmin());
+      allow delete: if isAuthenticated() && (resource.data.authorId == request.auth.uid || isAdmin());
+    }
+    
+    match /stats/{statId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidStat();
+      allow update: if isAdmin() && isValidStat();
+    }
+  }
+}

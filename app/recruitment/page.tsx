@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Shield, User, Lock, ArrowRight, CheckCircle2, Phone, Sword, ShieldAlert, Users, Target, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { auth, db, collection, addDoc, onAuthStateChanged } from '@/firebase';
 
 const StepIndicator = ({ currentStep }: { currentStep: number }) => (
   <div className="flex items-center justify-center gap-4 mb-12">
@@ -26,6 +27,11 @@ const StepIndicator = ({ currentStep }: { currentStep: number }) => (
 
 export default function RecruitmentPage() {
   const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+  const [user, setUser] = useState<any>(null);
+
   const [formData, setFormData] = useState({
     user: '',
     password: '',
@@ -42,8 +48,82 @@ export default function RecruitmentPage() {
     acceptRules: false
   });
 
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      if (currentUser) {
+        setFormData(prev => ({ ...prev, user: currentUser.displayName || '' }));
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({ 
+      ...prev, 
+      [name]: type === 'checkbox' ? checked : value 
+    }));
+  };
+
   const handleNext = () => setStep(s => Math.min(s + 1, 3));
   const handleBack = () => setStep(s => Math.max(s - 1, 1));
+
+  const handleSubmit = async () => {
+    if (!user) {
+      setError('Você precisa estar logado para se alistar. Vá para a página de login.');
+      return;
+    }
+    
+    if (!formData.acceptRules) {
+      setError('Você precisa aceitar as regras para continuar.');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    
+    try {
+      await addDoc(collection(db, 'recruits'), {
+        userId: user.uid,
+        user: formData.user,
+        whatsapp: formData.whatsapp,
+        charAttack: formData.charAttack,
+        missionAttack: formData.missionAttack,
+        charDefense: formData.charDefense,
+        missionDefense: formData.missionDefense,
+        charUp: formData.charUp,
+        charBoss: formData.charBoss,
+        receiveVideos: formData.receiveVideos,
+        status: 'Pendente',
+        createdAt: new Date().toISOString()
+      });
+      
+      setSuccess(true);
+    } catch (err) {
+      console.error(err);
+      setError('Erro ao enviar alistamento. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (success) {
+    return (
+      <div className="min-h-screen bg-brand-dark flex items-center justify-center p-6 bg-carbon">
+        <div className="w-full max-w-md bg-brand-card border border-brand-wine/30 rounded-2xl p-8 text-center">
+          <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+            <CheckCircle2 className="w-10 h-10 text-green-500" />
+          </div>
+          <h2 className="text-2xl font-black text-white mb-4 uppercase tracking-widest">Alistamento Enviado!</h2>
+          <p className="text-gray-400 text-sm mb-8">Sua solicitação foi enviada para a liderança. Aguarde o contato via WhatsApp ou verifique seu status no painel.</p>
+          <Link href="/" className="inline-block px-8 py-4 bg-brand-orange text-white font-black rounded-lg hover:scale-[1.02] transition-all gamer-glow uppercase tracking-widest text-sm">
+            VOLTAR AO INÍCIO
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-brand-dark flex items-center justify-center p-6 bg-carbon">
@@ -56,7 +136,7 @@ export default function RecruitmentPage() {
             </div>
           </Link>
           <h1 className="text-4xl font-black italic tracking-tighter font-montserrat text-glow mb-2">
-            ALISTAMENTO <span className="text-brand-orange">ALLYFENIX</span>
+            ALISTAMENTO <span className="text-brand-orange">BOSSHERAS</span>
           </h1>
           <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">Junte-se à elite do continente</p>
         </div>
@@ -82,6 +162,9 @@ export default function RecruitmentPage() {
                       <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-orange" />
                       <input 
                         type="text" 
+                        name="user"
+                        value={formData.user}
+                        onChange={handleInputChange}
                         placeholder="Seu login preferido"
                         className="w-full bg-black/40 border border-brand-wine/30 rounded-lg py-3 pl-12 pr-4 text-sm focus:border-brand-orange outline-none transition-all"
                       />
@@ -93,6 +176,9 @@ export default function RecruitmentPage() {
                       <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-orange" />
                       <input 
                         type="text" 
+                        name="whatsapp"
+                        value={formData.whatsapp}
+                        onChange={handleInputChange}
                         placeholder="(00) 00000-0000"
                         className="w-full bg-black/40 border border-brand-wine/30 rounded-lg py-3 pl-12 pr-4 text-sm focus:border-brand-orange outline-none transition-all"
                       />
@@ -104,6 +190,9 @@ export default function RecruitmentPage() {
                       <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-orange" />
                       <input 
                         type="password" 
+                        name="password"
+                        value={formData.password}
+                        onChange={handleInputChange}
                         placeholder="••••••••"
                         className="w-full bg-black/40 border border-brand-wine/30 rounded-lg py-3 pl-12 pr-4 text-sm focus:border-brand-orange outline-none transition-all"
                       />
@@ -115,6 +204,9 @@ export default function RecruitmentPage() {
                       <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-orange" />
                       <input 
                         type="password" 
+                        name="confirmPassword"
+                        value={formData.confirmPassword}
+                        onChange={handleInputChange}
                         placeholder="••••••••"
                         className="w-full bg-black/40 border border-brand-wine/30 rounded-lg py-3 pl-12 pr-4 text-sm focus:border-brand-orange outline-none transition-all"
                       />
@@ -146,6 +238,9 @@ export default function RecruitmentPage() {
                       <Sword className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-red" />
                       <input 
                         type="text" 
+                        name="charAttack"
+                        value={formData.charAttack}
+                        onChange={handleInputChange}
                         placeholder="Nome do char"
                         className="w-full bg-black/40 border border-brand-wine/30 rounded-lg py-3 pl-12 pr-4 text-sm focus:border-brand-orange outline-none transition-all"
                       />
@@ -157,6 +252,9 @@ export default function RecruitmentPage() {
                       <Target className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-red" />
                       <input 
                         type="text" 
+                        name="missionAttack"
+                        value={formData.missionAttack}
+                        onChange={handleInputChange}
                         placeholder="Ex: Switch, Killer"
                         className="w-full bg-black/40 border border-brand-wine/30 rounded-lg py-3 pl-12 pr-4 text-sm focus:border-brand-orange outline-none transition-all"
                       />
@@ -168,6 +266,9 @@ export default function RecruitmentPage() {
                       <ShieldAlert className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-orange" />
                       <input 
                         type="text" 
+                        name="charDefense"
+                        value={formData.charDefense}
+                        onChange={handleInputChange}
                         placeholder="Nome do char"
                         className="w-full bg-black/40 border border-brand-wine/30 rounded-lg py-3 pl-12 pr-4 text-sm focus:border-brand-orange outline-none transition-all"
                       />
@@ -179,6 +280,9 @@ export default function RecruitmentPage() {
                       <Shield className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-orange" />
                       <input 
                         type="text" 
+                        name="missionDefense"
+                        value={formData.missionDefense}
+                        onChange={handleInputChange}
                         placeholder="Ex: Tanker, Support"
                         className="w-full bg-black/40 border border-brand-wine/30 rounded-lg py-3 pl-12 pr-4 text-sm focus:border-brand-orange outline-none transition-all"
                       />
@@ -188,6 +292,9 @@ export default function RecruitmentPage() {
                     <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Personagem de Up</label>
                     <input 
                       type="text" 
+                      name="charUp"
+                      value={formData.charUp}
+                      onChange={handleInputChange}
                       placeholder="Nome do char"
                       className="w-full bg-black/40 border border-brand-wine/30 rounded-lg py-3 px-4 text-sm focus:border-brand-orange outline-none transition-all"
                     />
@@ -196,6 +303,9 @@ export default function RecruitmentPage() {
                     <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Personagem de Boss</label>
                     <input 
                       type="text" 
+                      name="charBoss"
+                      value={formData.charBoss}
+                      onChange={handleInputChange}
                       placeholder="Nome do char"
                       className="w-full bg-black/40 border border-brand-wine/30 rounded-lg py-3 px-4 text-sm focus:border-brand-orange outline-none transition-all"
                     />
@@ -203,7 +313,14 @@ export default function RecruitmentPage() {
                 </div>
                 
                 <div className="flex items-center gap-3 p-4 bg-white/5 rounded border border-white/10">
-                  <input type="checkbox" className="w-4 h-4 accent-brand-orange" id="videos" />
+                  <input 
+                    type="checkbox" 
+                    name="receiveVideos"
+                    checked={formData.receiveVideos}
+                    onChange={handleInputChange}
+                    className="w-4 h-4 accent-brand-orange" 
+                    id="videos" 
+                  />
                   <label htmlFor="videos" className="text-xs text-gray-400 font-bold uppercase tracking-widest cursor-pointer">Deseja receber vídeos e tutoriais da guild?</label>
                 </div>
 
@@ -234,7 +351,7 @@ export default function RecruitmentPage() {
                 className="space-y-8"
               >
                 <div className="bg-black/40 border border-brand-wine/30 rounded-lg p-6 max-h-60 overflow-y-auto space-y-4 text-sm text-gray-400 leading-relaxed">
-                  <h4 className="font-bold text-brand-orange uppercase tracking-widest mb-4">REGRAS DA ALLYFENIX</h4>
+                  <h4 className="font-bold text-brand-orange uppercase tracking-widest mb-4">REGRAS DA BOSSHERAS</h4>
                   <p>1. O uso do TeamSpeak 3 é obrigatório durante todos os eventos de Castle Siege.</p>
                   <p>2. Respeito mútuo entre todos os membros, independente de cargo ou tempo de guild.</p>
                   <p>3. Proibido o uso de qualquer software auxiliar (hacks, bots) que comprometa a integridade da guild.</p>
@@ -243,9 +360,22 @@ export default function RecruitmentPage() {
                   <p>6. O descumprimento de qualquer regra resultará em expulsão imediata.</p>
                 </div>
 
+                {error && (
+                  <div className="p-3 bg-red-900/20 border border-red-500/30 rounded text-red-500 text-xs font-bold text-center">
+                    {error}
+                  </div>
+                )}
+
                 <div className="flex items-center gap-3 p-4 bg-brand-orange/5 rounded border border-brand-orange/20">
-                  <input type="checkbox" className="w-5 h-5 accent-brand-orange" id="rules" />
-                  <label htmlFor="rules" className="text-xs text-brand-orange font-bold uppercase tracking-widest cursor-pointer">Li e aceito todas as regras da guilda AllyFenix</label>
+                  <input 
+                    type="checkbox" 
+                    name="acceptRules"
+                    checked={formData.acceptRules}
+                    onChange={handleInputChange}
+                    className="w-5 h-5 accent-brand-orange" 
+                    id="rules" 
+                  />
+                  <label htmlFor="rules" className="text-xs text-brand-orange font-bold uppercase tracking-widest cursor-pointer">Li e aceito todas as regras da guilda BossHeras</label>
                 </div>
 
                 <div className="flex gap-4">
@@ -256,9 +386,11 @@ export default function RecruitmentPage() {
                     VOLTAR
                   </button>
                   <button 
-                    className="flex-[2] py-4 bg-gradient-to-r from-brand-red to-brand-orange text-white font-black rounded-lg flex items-center justify-center gap-2 hover:scale-[1.02] transition-all gamer-glow uppercase tracking-widest text-sm"
+                    onClick={handleSubmit}
+                    disabled={loading}
+                    className="flex-[2] py-4 bg-gradient-to-r from-brand-red to-brand-orange text-white font-black rounded-lg flex items-center justify-center gap-2 hover:scale-[1.02] transition-all gamer-glow uppercase tracking-widest text-sm disabled:opacity-50"
                   >
-                    ENVIAR ALISTAMENTO
+                    {loading ? 'ENVIANDO...' : 'ENVIAR ALISTAMENTO'}
                     <CheckCircle2 className="w-5 h-5" />
                   </button>
                 </div>

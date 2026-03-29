@@ -12,7 +12,8 @@ import {
   Mic2,
   Trophy,
   Shield,
-  Settings
+  Settings,
+  UserCircle
 } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -23,6 +24,7 @@ const Sidebar = () => {
     { name: 'Início', icon: Home, href: '/' },
     { name: 'Estatísticas CS', icon: BarChart2, href: '/stats' },
     { name: 'Vídeos', icon: Video, href: '/videos' },
+    { name: 'Meu Perfil', icon: UserCircle, href: '/profile' },
     { name: 'Painel Admin', icon: Settings, href: '/admin' },
   ];
 
@@ -34,7 +36,7 @@ const Sidebar = () => {
           <Shield className="w-12 h-12 text-brand-orange" />
         </div>
         <h1 className="text-2xl font-bold tracking-tighter text-glow font-montserrat">
-          ALLY<span className="text-brand-orange">FENIX</span>
+          BOSS<span className="text-brand-orange">HERAS</span>
         </h1>
         
         {/* Badge */}
@@ -91,7 +93,7 @@ const Sidebar = () => {
       {/* Footer */}
       <div className="p-6 border-t border-brand-wine/20">
         <p className="text-[10px] text-gray-600 text-center uppercase tracking-tighter">
-          &copy; 2026 ALLYFENIX GUILD.<br/>TODOS OS DIREITOS RESERVADOS.
+          &copy; 2026 BOSSHERAS GUILD.<br/>TODOS OS DIREITOS RESERVADOS.
         </p>
       </div>
     </aside>

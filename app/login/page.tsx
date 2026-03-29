@@ -1,11 +1,49 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Shield, User, Lock, LogIn, ArrowLeft } from 'lucide-react';
 import { motion } from 'motion/react';
+import { auth, signInWithPopup, googleProvider, db, doc, getDoc, setDoc } from '@/firebase';
 
 export default function LoginPage() {
+  const router = useRouter();
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleGoogleLogin = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+      
+      // Check if user exists in db
+      const userRef = doc(db, 'users', user.uid);
+      const userDoc = await getDoc(userRef);
+      
+      if (!userDoc.exists()) {
+        // Create user
+        await setDoc(userRef, {
+          uid: user.uid,
+          email: user.email,
+          role: 'user',
+          displayName: user.displayName || '',
+          photoUrl: user.photoURL || '',
+          createdAt: new Date().toISOString()
+        });
+      }
+      
+      router.push('/profile');
+    } catch (err: any) {
+      console.error(err);
+      setError('Erro ao fazer login com Google. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-brand-dark flex items-center justify-center p-6 bg-carbon">
       <div className="w-full max-w-md">
@@ -23,14 +61,38 @@ export default function LoginPage() {
           <h1 className="text-3xl font-black italic tracking-tighter font-montserrat text-glow">
             ÁREA DO <span className="text-brand-orange">MEMBRO</span>
           </h1>
-          <p className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.3em] mt-1">Portal de controle AllyFenix</p>
+          <p className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.3em] mt-1">Portal de controle BossHeras</p>
         </div>
 
         {/* Login Form */}
         <div className="bg-brand-card border border-brand-wine/30 rounded-2xl p-8 relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-wine via-brand-orange to-brand-wine" />
           
-          <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+          <div className="space-y-6">
+            {error && (
+              <div className="p-3 bg-red-900/20 border border-red-500/30 rounded text-red-500 text-xs font-bold text-center">
+                {error}
+              </div>
+            )}
+            
+            <button 
+              onClick={handleGoogleLogin}
+              disabled={loading}
+              className="w-full py-4 bg-white text-black font-black rounded-lg flex items-center justify-center gap-2 hover:scale-[1.02] transition-all uppercase tracking-widest text-sm disabled:opacity-50"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M21.35,11.1H12.18V13.83H18.69C18.36,17.64 15.19,19.27 12.19,19.27C8.36,19.27 5,16.25 5,12C5,7.9 8.2,4.73 12.2,4.73C15.29,4.73 17.1,6.7 17.1,6.7L19,4.72C19,4.72 16.56,2 12.1,2C6.42,2 2.03,6.8 2.03,12C2.03,17.05 6.16,22 12.25,22C17.6,22 21.5,18.33 21.5,12.91C21.5,11.76 21.35,11.1 21.35,11.1V11.1Z" />
+              </svg>
+              {loading ? 'AUTENTICANDO...' : 'ENTRAR COM GOOGLE'}
+            </button>
+
+            <div className="relative flex items-center py-2">
+              <div className="flex-grow border-t border-brand-wine/30"></div>
+              <span className="flex-shrink-0 mx-4 text-gray-500 text-xs font-bold uppercase tracking-widest">Ou use email</span>
+              <div className="flex-grow border-t border-brand-wine/30"></div>
+            </div>
+
+            <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
             <div className="space-y-2">
               <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Usuário</label>
               <div className="relative">
@@ -68,6 +130,7 @@ export default function LoginPage() {
               <LogIn className="w-4 h-4" />
             </button>
           </form>
+          </div>
         </div>
 
         {/* Footer Info */}

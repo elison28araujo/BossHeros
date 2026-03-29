@@ -6,8 +6,8 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const montserrat = Montserrat({ subsets: ['latin'], variable: '--font-montserrat' });
 
 export const metadata: Metadata = {
-  title: 'AllyFenix - Portal Oficial',
-  description: 'Portal oficial da guilda AllyFenix - Mu Online',
+  title: 'BossHeras - Portal Oficial',
+  description: 'Portal oficial da guilda BossHeras - Mu Online',
 };
 
 export default function RootLayout({children}: {children: React.ReactNode}) {

@@ -53,7 +53,7 @@ const TabSection = () => {
                 <div>
                   <h3 className="text-2xl font-bold text-brand-orange mb-4 font-montserrat italic">SOBRE A GUILD</h3>
                   <p className="text-gray-400 leading-relaxed">
-                    A AllyFenix nasceu da união de guerreiros lendários com um único propósito: dominar o continente de Mu Online. 
+                    A BossHeras nasceu da união de guerreiros lendários com um único propósito: dominar o continente de Mu Online. 
                     Com uma trajetória marcada por vitórias épicas no Castle Siege, nos tornamos referência em estratégia, 
                     disciplina e poder de fogo. Não somos apenas uma guilda, somos uma família forjada no campo de batalha.
                   </p>

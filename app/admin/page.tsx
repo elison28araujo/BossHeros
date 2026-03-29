@@ -17,9 +17,11 @@ import {
   Shield,
   Lock,
   User,
-  LogIn
+  LogIn,
+  LogOut
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { auth, db, onAuthStateChanged, collection, getDocs, updateDoc, doc, deleteDoc, onSnapshot, signOut, setDoc } from '@/firebase';
 
 const StatCard = ({ title, value, icon: Icon, color }: any) => (
   <div className="bg-brand-card border border-brand-wine/20 rounded-xl p-6 flex items-center gap-4">
@@ -70,28 +72,128 @@ const RecruitmentRow = ({ name, char, date, status }: any) => (
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [login, setLogin] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [recruits, setRecruits] = useState<any[]>([]);
+  const [stats, setStats] = useState({ guildWins: 152, activeMembers: 450, yearsOfGlory: 8 });
+  const [editStats, setEditStats] = useState({ guildWins: 152, activeMembers: 450, yearsOfGlory: 8 });
+  const [videos, setVideos] = useState<any[]>([]);
 
   useEffect(() => {
-    const auth = sessionStorage.getItem('adminAuth');
-    if (auth === 'true') {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setIsLoggedIn(true);
-    }
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        setIsUserLoggedIn(true);
+        // Check role
+        const userDoc = await getDocs(collection(db, 'users'));
+        const currentUser = userDoc.docs.find(d => d.id === user.uid)?.data();
+        
+        if (currentUser?.role === 'admin' || user.email === 'elison28araujo@gmail.com') {
+          setIsLoggedIn(true);
+          setUserRole('admin');
+        } else {
+          setIsLoggedIn(false);
+        }
+      } else {
+        setIsUserLoggedIn(false);
+        setIsLoggedIn(false);
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (login === 'Elison2026@#@admin_2026.com' && password === 'Elison2026@#') {
-      setIsLoggedIn(true);
-      sessionStorage.setItem('adminAuth', 'true');
-      setError('');
-    } else {
-      setError('Credenciais inválidas. Tente novamente.');
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    const unsubscribeRecruits = onSnapshot(collection(db, 'recruits'), (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setRecruits(data);
+    });
+
+    const unsubscribeStats = onSnapshot(doc(db, 'stats', 'global'), (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data() as any;
+        setStats(data);
+        setEditStats(data);
+      }
+    });
+
+    const unsubscribeVideos = onSnapshot(collection(db, 'videos'), (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setVideos(data.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+    });
+
+    return () => {
+      unsubscribeRecruits();
+      unsubscribeStats();
+      unsubscribeVideos();
+    };
+  }, [isLoggedIn]);
+
+  const handleApprove = async (id: string) => {
+    try {
+      await updateDoc(doc(db, 'recruits', id), { status: 'Aprovado' });
+    } catch (error) {
+      console.error(error);
+      alert('Erro ao aprovar alistamento.');
     }
   };
+
+  const handleReject = async (id: string) => {
+    try {
+      await updateDoc(doc(db, 'recruits', id), { status: 'Reprovado' });
+    } catch (error) {
+      console.error(error);
+      alert('Erro ao reprovar alistamento.');
+    }
+  };
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    window.location.href = '/login';
+  };
+
+  const handleUpdateStats = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await setDoc(doc(db, 'stats', 'global'), editStats, { merge: true });
+      alert('Estatísticas atualizadas com sucesso!');
+    } catch (error) {
+      console.error(error);
+      alert('Erro ao atualizar estatísticas.');
+    }
+  };
+
+  const handleDeleteVideo = async (id: string) => {
+    if (window.confirm('Tem certeza que deseja excluir este vídeo?')) {
+      try {
+        await deleteDoc(doc(db, 'videos', id));
+      } catch (error) {
+        console.error(error);
+        alert('Erro ao excluir vídeo.');
+      }
+    }
+  };
+
+  const handleResetRecruits = async () => {
+    if (window.confirm('ATENÇÃO: Tem certeza que deseja apagar TODOS os alistamentos? Esta ação não pode ser desfeita.')) {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'recruits'));
+        const deletePromises = querySnapshot.docs.map(document => deleteDoc(doc(db, 'recruits', document.id)));
+        await Promise.all(deletePromises);
+        alert('Todos os alistamentos foram apagados com sucesso.');
+      } catch (error) {
+        console.error(error);
+        alert('Erro ao apagar alistamentos.');
+      }
+    }
+  };
+
+  if (loading) {
+    return <div className="min-h-screen bg-brand-dark flex items-center justify-center text-brand-orange font-bold">CARREGANDO...</div>;
+  }
 
   if (!isLoggedIn) {
     return (
@@ -112,43 +214,13 @@ export default function AdminDashboard() {
             <div className="bg-brand-card border border-brand-wine/30 rounded-2xl p-8 relative overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-wine via-brand-orange to-brand-wine" />
               
-              <form className="space-y-6" onSubmit={handleLogin}>
-                {error && (
-                  <div className="p-3 bg-red-900/20 border border-red-500/30 rounded text-red-500 text-xs font-bold text-center">
-                    {error}
-                  </div>
-                )}
+              <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); window.location.href = isUserLoggedIn ? '/profile' : '/login'; }}>
+                <div className="p-3 bg-red-900/20 border border-red-500/30 rounded text-red-500 text-xs font-bold text-center">
+                  Você não tem permissão para acessar o painel. Faça login com uma conta de administrador.
+                </div>
                 
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Login Admin</label>
-                  <div className="relative">
-                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-orange" />
-                    <input 
-                      type="text" 
-                      value={login}
-                      onChange={(e) => setLogin(e.target.value)}
-                      placeholder="E-mail do administrador"
-                      className="w-full bg-black/40 border border-brand-wine/30 rounded-lg py-3 pl-12 pr-4 text-sm focus:border-brand-orange outline-none transition-all"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Senha</label>
-                  <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-orange" />
-                    <input 
-                      type="password" 
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••"
-                      className="w-full bg-black/40 border border-brand-wine/30 rounded-lg py-3 pl-12 pr-4 text-sm focus:border-brand-orange outline-none transition-all"
-                    />
-                  </div>
-                </div>
-
                 <button type="submit" className="w-full py-4 bg-brand-orange text-white font-black rounded-lg flex items-center justify-center gap-2 hover:scale-[1.02] transition-all gamer-glow uppercase tracking-widest text-sm">
-                  AUTENTICAR
+                  {isUserLoggedIn ? 'IR PARA MEU PERFIL' : 'IR PARA LOGIN'}
                   <LogIn className="w-4 h-4" />
                 </button>
               </form>
@@ -170,16 +242,15 @@ export default function AdminDashboard() {
             <h2 className="text-3xl font-black italic tracking-tighter font-montserrat text-glow">
               PAINEL <span className="text-brand-orange">ADMINISTRATIVO</span>
             </h2>
-            <p className="text-xs text-gray-500 font-bold uppercase tracking-[0.2em] mt-1">Bem-vindo de volta, GM_FENIX</p>
+            <p className="text-xs text-gray-500 font-bold uppercase tracking-[0.2em] mt-1">Bem-vindo de volta, GM_BOSSHERAS</p>
           </div>
           <div className="flex items-center gap-4">
-            <button className="relative p-3 bg-brand-card border border-brand-wine/20 rounded-lg text-gray-400 hover:text-brand-orange transition-all">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-brand-red rounded-full border border-brand-dark" />
+            <button onClick={handleLogout} className="relative p-3 bg-brand-card border border-brand-wine/20 rounded-lg text-red-400 hover:text-red-500 transition-all">
+              <LogOut className="w-5 h-5" />
             </button>
             <div className="flex items-center gap-3 pl-4 border-l border-brand-wine/20">
               <div className="text-right">
-                <div className="text-xs font-bold text-white">GM_FENIX</div>
+                <div className="text-xs font-bold text-white">GM_BOSSHERAS</div>
                 <div className="text-[10px] text-brand-orange font-bold uppercase tracking-tighter">Guild Master</div>
               </div>
               <div className="w-10 h-10 bg-brand-orange rounded-lg flex items-center justify-center gamer-glow">
@@ -191,10 +262,10 @@ export default function AdminDashboard() {
 
         {/* Quick Stats */}
         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard title="Novos Alistamentos" value="12" icon={Users} color="text-brand-orange" />
-          <StatCard title="Vitórias CS" value="152" icon={Trophy} color="text-yellow-500" />
-          <StatCard title="Vídeos Postados" value="48" icon={Video} color="text-blue-500" />
-          <StatCard title="Membros Online" value="84" icon={Users} color="text-green-500" />
+          <StatCard title="Novos Alistamentos" value={recruits.filter(r => r.status === 'Pendente').length} icon={Users} color="text-brand-orange" />
+          <StatCard title="Vitórias CS" value={stats.guildWins} icon={Trophy} color="text-yellow-500" />
+          <StatCard title="Membros Ativos" value={stats.activeMembers} icon={Users} color="text-green-500" />
+          <StatCard title="Anos de Glória" value={stats.yearsOfGlory} icon={Trophy} color="text-blue-500" />
         </section>
 
         {/* Admin Tabs */}
@@ -254,12 +325,173 @@ export default function AdminDashboard() {
                       </tr>
                     </thead>
                     <tbody>
-                      <RecruitmentRow name="Elison Araujo" char="FENIX_BK" date="29 Mar 2026" status="Pendente" />
-                      <RecruitmentRow name="Ricardo Silva" char="SM_LEGEND" date="28 Mar 2026" status="Pendente" />
-                      <RecruitmentRow name="Ana Paula" char="ELF_QUEEN" date="27 Mar 2026" status="Aprovado" />
-                      <RecruitmentRow name="Marcos Souza" char="DL_MASTER" date="25 Mar 2026" status="Reprovado" />
+                      {recruits.map((recruit) => (
+                        <tr key={recruit.id} className="border-b border-brand-wine/5 hover:bg-white/5 transition-colors group">
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-brand-wine/20 flex items-center justify-center text-brand-orange font-bold text-xs uppercase">
+                                {recruit.user?.[0] || '?'}
+                              </div>
+                              <div>
+                                <div className="text-sm font-bold text-white">{recruit.user}</div>
+                                <div className="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">WPP: {recruit.whatsapp}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-sm font-bold text-brand-orange">{recruit.charAttack}</td>
+                          <td className="px-6 py-4 text-xs text-gray-400">{new Date(recruit.createdAt).toLocaleDateString()}</td>
+                          <td className="px-6 py-4">
+                            <span className={`text-[10px] px-2 py-1 rounded font-bold uppercase tracking-tighter border ${
+                              recruit.status === 'Pendente' ? 'bg-yellow-900/20 text-yellow-500 border-yellow-500/20' :
+                              recruit.status === 'Aprovado' ? 'bg-green-900/20 text-green-500 border-green-500/20' :
+                              'bg-red-900/20 text-red-500 border-red-500/20'
+                            }`}>
+                              {recruit.status}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <button onClick={() => handleApprove(recruit.id)} className="p-2 bg-green-900/20 text-green-500 rounded hover:bg-green-500 hover:text-white transition-all"><Check className="w-4 h-4" /></button>
+                              <button onClick={() => handleReject(recruit.id)} className="p-2 bg-red-900/20 text-red-500 rounded hover:bg-red-500 hover:text-white transition-all"><X className="w-4 h-4" /></button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                      {recruits.length === 0 && (
+                        <tr>
+                          <td colSpan={5} className="px-6 py-8 text-center text-gray-500 text-sm">Nenhum alistamento encontrado.</td>
+                        </tr>
+                      )}
                     </tbody>
                   </table>
+                </div>
+              </motion.div>
+            )}
+
+            {activeTab === 'stats' && (
+              <motion.div
+                key="stats"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="bg-brand-card border border-brand-wine/20 rounded-xl p-8"
+              >
+                <h3 className="font-bold text-sm uppercase tracking-widest text-brand-orange mb-6">Atualizar Estatísticas CS</h3>
+                <form onSubmit={handleUpdateStats} className="space-y-6 max-w-md">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Vitórias CS</label>
+                    <input 
+                      type="number" 
+                      value={editStats.guildWins}
+                      onChange={(e) => setEditStats({...editStats, guildWins: Number(e.target.value)})}
+                      className="w-full bg-black/40 border border-brand-wine/30 rounded-lg py-3 px-4 text-sm focus:border-brand-orange outline-none transition-all"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Membros Ativos</label>
+                    <input 
+                      type="number" 
+                      value={editStats.activeMembers}
+                      onChange={(e) => setEditStats({...editStats, activeMembers: Number(e.target.value)})}
+                      className="w-full bg-black/40 border border-brand-wine/30 rounded-lg py-3 px-4 text-sm focus:border-brand-orange outline-none transition-all"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Anos de Glória</label>
+                    <input 
+                      type="number" 
+                      value={editStats.yearsOfGlory}
+                      onChange={(e) => setEditStats({...editStats, yearsOfGlory: Number(e.target.value)})}
+                      className="w-full bg-black/40 border border-brand-wine/30 rounded-lg py-3 px-4 text-sm focus:border-brand-orange outline-none transition-all"
+                    />
+                  </div>
+                  <button type="submit" className="w-full py-4 bg-brand-orange text-white font-black rounded-lg flex items-center justify-center gap-2 hover:scale-[1.02] transition-all gamer-glow uppercase tracking-widest text-sm">
+                    SALVAR ESTATÍSTICAS
+                    <Check className="w-4 h-4" />
+                  </button>
+                </form>
+              </motion.div>
+            )}
+
+            {activeTab === 'content' && (
+              <motion.div
+                key="content"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="bg-brand-card border border-brand-wine/20 rounded-xl overflow-hidden"
+              >
+                <div className="p-6 border-b border-brand-wine/20 flex items-center justify-between">
+                  <h3 className="font-bold text-sm uppercase tracking-widest text-brand-orange">Gerenciar Vídeos</h3>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-brand-wine/10">
+                        <th className="px-6 py-4">Título</th>
+                        <th className="px-6 py-4">Autor</th>
+                        <th className="px-6 py-4">Data</th>
+                        <th className="px-6 py-4 text-right">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {videos.map((video) => (
+                        <tr key={video.id} className="border-b border-brand-wine/5 hover:bg-white/5 transition-colors group">
+                          <td className="px-6 py-4">
+                            <div className="text-sm font-bold text-white line-clamp-1">{video.title}</div>
+                            <a href={video.url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-brand-orange hover:underline uppercase font-bold tracking-tighter">Ver Vídeo</a>
+                          </td>
+                          <td className="px-6 py-4 text-sm font-bold text-gray-400">{video.authorName}</td>
+                          <td className="px-6 py-4 text-xs text-gray-400">{new Date(video.createdAt).toLocaleDateString()}</td>
+                          <td className="px-6 py-4 text-right">
+                            <button onClick={() => handleDeleteVideo(video.id)} className="p-2 bg-red-900/20 text-red-500 rounded hover:bg-red-500 hover:text-white transition-all"><X className="w-4 h-4" /></button>
+                          </td>
+                        </tr>
+                      ))}
+                      {videos.length === 0 && (
+                        <tr>
+                          <td colSpan={4} className="px-6 py-8 text-center text-gray-500 text-sm">Nenhum vídeo encontrado.</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </motion.div>
+            )}
+
+            {activeTab === 'settings' && (
+              <motion.div
+                key="settings"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="bg-brand-card border border-brand-wine/20 rounded-xl p-8"
+              >
+                <h3 className="font-bold text-sm uppercase tracking-widest text-brand-orange mb-6">Configurações do Sistema</h3>
+                
+                <div className="space-y-8 max-w-2xl">
+                  <div className="p-6 border border-red-500/20 bg-red-900/10 rounded-xl">
+                    <h4 className="font-bold text-red-500 mb-2 flex items-center gap-2">
+                      <Shield className="w-5 h-5" />
+                      ZONA DE PERIGO
+                    </h4>
+                    <p className="text-sm text-gray-400 mb-6">
+                      As ações abaixo são destrutivas e não podem ser revertidas. Tenha certeza absoluta antes de prosseguir.
+                    </p>
+                    
+                    <div className="flex items-center justify-between p-4 bg-black/40 rounded-lg border border-red-500/10">
+                      <div>
+                        <div className="font-bold text-white text-sm">Zerar Alistamentos</div>
+                        <div className="text-xs text-gray-500">Apaga todos os registros de recrutamento atuais.</div>
+                      </div>
+                      <button 
+                        onClick={handleResetRecruits}
+                        className="px-4 py-2 bg-red-500/20 text-red-500 hover:bg-red-500 hover:text-white font-bold rounded transition-all text-xs uppercase tracking-widest"
+                      >
+                        Zerar Tudo
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </motion.div>
             )}
@@ -276,7 +508,7 @@ export default function AdminDashboard() {
                   <h3 className="font-bold text-sm uppercase tracking-widest text-brand-orange mb-6">Últimas Atividades</h3>
                   <div className="space-y-6">
                     {[
-                      { user: 'GM_FENIX', action: 'atualizou o ranking CS', time: '2 horas atrás', icon: Trophy },
+                      { user: 'GM_BOSSHERAS', action: 'atualizou o ranking CS', time: '2 horas atrás', icon: Trophy },
                       { user: 'SISTEMA', action: 'novo alistamento recebido', time: '4 horas atrás', icon: Users },
                       { user: 'MOD_DARK', action: 'adicionou um novo vídeo', time: '1 dia atrás', icon: Video },
                     ].map((item, i) => (

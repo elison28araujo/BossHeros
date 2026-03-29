@@ -1,0 +1,80 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Registered user of the portal",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "user"] },
+        "displayName": { "type": "string" },
+        "photoUrl": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "Recruit": {
+      "title": "Recruit",
+      "description": "Recruitment application",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "user": { "type": "string" },
+        "whatsapp": { "type": "string" },
+        "charAttack": { "type": "string" },
+        "missionAttack": { "type": "string" },
+        "charDefense": { "type": "string" },
+        "missionDefense": { "type": "string" },
+        "charUp": { "type": "string" },
+        "charBoss": { "type": "string" },
+        "status": { "type": "string", "enum": ["Pendente", "Aprovado", "Reprovado"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "user", "whatsapp", "charAttack", "status", "createdAt"]
+    },
+    "Video": {
+      "title": "Video",
+      "description": "Uploaded or linked video",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "url": { "type": "string" },
+        "thumbnail": { "type": "string" },
+        "authorId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "url", "authorId", "createdAt"]
+    },
+    "Stat": {
+      "title": "Stat",
+      "description": "Guild statistics",
+      "type": "object",
+      "properties": {
+        "guildWins": { "type": "number" },
+        "activeMembers": { "type": "number" },
+        "yearsOfGlory": { "type": "number" }
+      },
+      "required": ["guildWins", "activeMembers", "yearsOfGlory"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Stores user profiles"
+    },
+    "/recruits/{recruitId}": {
+      "schema": { "$ref": "#/entities/Recruit" },
+      "description": "Stores recruitment applications"
+    },
+    "/videos/{videoId}": {
+      "schema": { "$ref": "#/entities/Video" },
+      "description": "Stores videos"
+    },
+    "/stats/{statId}": {
+      "schema": { "$ref": "#/entities/Stat" },
+      "description": "Stores global statistics"
+    }
+  }
+}
