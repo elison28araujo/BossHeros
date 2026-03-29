@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { 
   Users, 
@@ -14,7 +14,10 @@ import {
   LayoutDashboard,
   MessageSquare,
   Bell,
-  Shield
+  Shield,
+  Lock,
+  User,
+  LogIn
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -66,6 +69,95 @@ const RecruitmentRow = ({ name, char, date, status }: any) => (
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [login, setLogin] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const auth = sessionStorage.getItem('adminAuth');
+    if (auth === 'true') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIsLoggedIn(true);
+    }
+  }, []);
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (login === 'Elison2026@#@admin_2026.com' && password === 'Elison2026@#') {
+      setIsLoggedIn(true);
+      sessionStorage.setItem('adminAuth', 'true');
+      setError('');
+    } else {
+      setError('Credenciais inválidas. Tente novamente.');
+    }
+  };
+
+  if (!isLoggedIn) {
+    return (
+      <div className="flex min-h-screen">
+        <Sidebar />
+        <main className="flex-1 ml-72 p-10 flex items-center justify-center">
+          <div className="w-full max-w-md">
+            <div className="text-center mb-10">
+              <div className="w-20 h-20 bg-brand-wine rounded-full flex items-center justify-center border-2 border-brand-orange mx-auto mb-4 gamer-glow">
+                <Shield className="w-10 h-10 text-brand-orange" />
+              </div>
+              <h1 className="text-3xl font-black italic tracking-tighter font-montserrat text-glow">
+                ACESSO <span className="text-brand-orange">RESTRITO</span>
+              </h1>
+              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.3em] mt-1">Painel Administrativo</p>
+            </div>
+
+            <div className="bg-brand-card border border-brand-wine/30 rounded-2xl p-8 relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-wine via-brand-orange to-brand-wine" />
+              
+              <form className="space-y-6" onSubmit={handleLogin}>
+                {error && (
+                  <div className="p-3 bg-red-900/20 border border-red-500/30 rounded text-red-500 text-xs font-bold text-center">
+                    {error}
+                  </div>
+                )}
+                
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Login Admin</label>
+                  <div className="relative">
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-orange" />
+                    <input 
+                      type="text" 
+                      value={login}
+                      onChange={(e) => setLogin(e.target.value)}
+                      placeholder="E-mail do administrador"
+                      className="w-full bg-black/40 border border-brand-wine/30 rounded-lg py-3 pl-12 pr-4 text-sm focus:border-brand-orange outline-none transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Senha</label>
+                  <div className="relative">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-orange" />
+                    <input 
+                      type="password" 
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full bg-black/40 border border-brand-wine/30 rounded-lg py-3 pl-12 pr-4 text-sm focus:border-brand-orange outline-none transition-all"
+                    />
+                  </div>
+                </div>
+
+                <button type="submit" className="w-full py-4 bg-brand-orange text-white font-black rounded-lg flex items-center justify-center gap-2 hover:scale-[1.02] transition-all gamer-glow uppercase tracking-widest text-sm">
+                  AUTENTICAR
+                  <LogIn className="w-4 h-4" />
+                </button>
+              </form>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen">
