@@ -85,51 +85,6 @@ export default function LoginPage() {
               </svg>
               {loading ? 'AUTENTICANDO...' : 'ENTRAR COM GOOGLE'}
             </button>
-
-            <div className="relative flex items-center py-2">
-              <div className="flex-grow border-t border-brand-wine/30"></div>
-              <span className="flex-shrink-0 mx-4 text-gray-500 text-xs font-bold uppercase tracking-widest">Ou use email</span>
-              <div className="flex-grow border-t border-brand-wine/30"></div>
-            </div>
-
-            <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Usuário</label>
-              <div className="relative">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-orange" />
-                <input 
-                  type="text" 
-                  placeholder="Seu login"
-                  className="w-full bg-black/40 border border-brand-wine/30 rounded-lg py-3 pl-12 pr-4 text-sm focus:border-brand-orange outline-none transition-all"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between px-1">
-                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Senha</label>
-                <button type="button" className="text-[10px] font-bold text-brand-red hover:text-brand-orange transition-colors uppercase tracking-widest">Esqueci a senha</button>
-              </div>
-              <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-orange" />
-                <input 
-                  type="password" 
-                  placeholder="••••••••"
-                  className="w-full bg-black/40 border border-brand-wine/30 rounded-lg py-3 pl-12 pr-4 text-sm focus:border-brand-orange outline-none transition-all"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 px-1">
-              <input type="checkbox" className="w-4 h-4 accent-brand-orange" id="remember" />
-              <label htmlFor="remember" className="text-[10px] font-bold text-gray-500 uppercase tracking-widest cursor-pointer">Lembrar login</label>
-            </div>
-
-            <button className="w-full py-4 bg-brand-orange text-white font-black rounded-lg flex items-center justify-center gap-2 hover:scale-[1.02] transition-all gamer-glow uppercase tracking-widest text-sm">
-              ACESSAR PORTAL
-              <LogIn className="w-4 h-4" />
-            </button>
-          </form>
           </div>
         </div>
 
