@@ -29,6 +29,10 @@ export default function ProfilePage() {
         const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
         if (userDoc.exists()) {
           const data = userDoc.data();
+          if (data.approved === false) {
+            router.push('/recruitment');
+            return;
+          }
           setProfileData({
             displayName: data.displayName || '',
             photoUrl: data.photoUrl || ''

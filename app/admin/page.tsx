@@ -330,6 +330,7 @@ export default function AdminDashboard() {
                         <th className="px-6 py-4">Usuário</th>
                         <th className="px-6 py-4">Email</th>
                         <th className="px-6 py-4">Role</th>
+                        <th className="px-6 py-4">Aprovado</th>
                         <th className="px-6 py-4 text-right">Ações</th>
                       </tr>
                     </thead>
@@ -344,6 +345,16 @@ export default function AdminDashboard() {
                             }`}>
                               {user.role}
                             </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <button 
+                              onClick={() => updateDoc(doc(db, 'users', user.id), { approved: !user.approved })}
+                              className={`text-[10px] px-2 py-1 rounded font-bold uppercase tracking-tighter border ${
+                                user.approved ? 'bg-green-900/20 text-green-500 border-green-500/20' : 'bg-red-900/20 text-red-500 border-red-500/20'
+                              }`}
+                            >
+                              {user.approved ? 'Sim' : 'Não'}
+                            </button>
                           </td>
                           <td className="px-6 py-4 text-right">
                             <button 

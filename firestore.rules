@@ -43,10 +43,11 @@ service cloud.firestore {
     // ===============================================================
     
     function isValidUser() {
-      return hasOnlyAllowedFields(['uid', 'email', 'role', 'displayName', 'photoUrl', 'createdAt']) &&
+      return hasOnlyAllowedFields(['uid', 'email', 'role', 'approved', 'displayName', 'photoUrl', 'createdAt']) &&
              isValidString('uid', 1, 100) &&
              isValidString('email', 5, 100) &&
              request.resource.data.role in ['admin', 'user'] &&
+             request.resource.data.approved is bool &&
              isValidOptionalString('displayName', 100) &&
              isValidOptionalString('photoUrl', 200000) &&
              request.resource.data.createdAt is string;
@@ -99,7 +100,7 @@ service cloud.firestore {
       allow update: if isAuthenticated() && 
                     isValidUser() && 
                     request.resource.data.uid == resource.data.uid &&
-                    ((isOwner(userId) && request.resource.data.role == resource.data.role) || isAdmin());
+                    ((isOwner(userId) && request.resource.data.role == resource.data.role && request.resource.data.approved == resource.data.approved) || isAdmin());
     }
     
     match /recruits/{recruitId} {

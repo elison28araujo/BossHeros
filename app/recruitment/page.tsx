@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Shield, User, Lock, ArrowRight, CheckCircle2, Phone, Sword, ShieldAlert, Users, Target, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { auth, db, collection, addDoc, onAuthStateChanged, createUserWithEmailAndPassword, doc, setDoc } from '@/firebase';
+import { auth, db, collection, addDoc, onAuthStateChanged, createUserWithEmailAndPassword, doc, setDoc, getDoc } from '@/firebase';
+import { useRouter } from 'next/navigation';
 
 const StepIndicator = ({ currentStep }: { currentStep: number }) => (
   <div className="flex items-center justify-center gap-4 mb-12">
@@ -26,6 +27,7 @@ const StepIndicator = ({ currentStep }: { currentStep: number }) => (
 );
 
 export default function RecruitmentPage() {
+  const router = useRouter();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -49,14 +51,20 @@ export default function RecruitmentPage() {
   });
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
+        setUser(currentUser);
         setFormData(prev => ({ ...prev, user: currentUser.displayName || '' }));
+        
+        // Verificar aprovação
+        const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+        if (userDoc.exists() && userDoc.data().approved === true) {
+          router.push('/profile');
+        }
       }
     });
     return () => unsubscribe();
-  }, []);
+  }, [router]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -83,6 +91,7 @@ export default function RecruitmentPage() {
           uid: currentUser.uid,
           email: currentUser.email,
           role: 'user',
+          approved: false, // Novo campo
           displayName: formData.user,
           createdAt: new Date().toISOString()
         });

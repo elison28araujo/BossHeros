@@ -46,6 +46,7 @@ export default function LoginPage() {
           uid: user.uid,
           email: user.email,
           role: 'user',
+          approved: false, // Novo campo
           displayName: user.displayName || '',
           photoUrl: user.photoURL || '',
           createdAt: new Date().toISOString()
