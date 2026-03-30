@@ -595,14 +595,8 @@ export default function AdminDashboard() {
                     <div className="flex items-center justify-between p-4 bg-black/40 rounded-lg border border-red-500/10">
                       <div>
                         <div className="font-bold text-white text-sm">Zerar Alistamentos</div>
-                        <div className="text-xs text-gray-500">Apaga todos os registros de recrutamento atuais.</div>
+                        <div className="text-xs text-gray-500">Funcionalidade indisponível temporariamente.</div>
                       </div>
-                      <button 
-                        onClick={handleResetRecruits}
-                        className="px-4 py-2 bg-red-500/20 text-red-500 hover:bg-red-500 hover:text-white font-bold rounded transition-all text-xs uppercase tracking-widest"
-                      >
-                        Zerar Tudo
-                      </button>
                     </div>
                   </div>
                 </div>
