@@ -81,6 +81,12 @@ export default function RecruitmentPage() {
       return;
     }
 
+    // Validate passwords
+    if (formData.password !== formData.confirmPassword) {
+      setError('As senhas não coincidem.');
+      return;
+    }
+
     // Validate WhatsApp (only numbers)
     if (!/^\d+$/.test(formData.whatsapp)) {
       setError('O campo WhatsApp deve conter apenas números.');

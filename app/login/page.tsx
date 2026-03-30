@@ -5,12 +5,29 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Shield, User, Lock, LogIn, ArrowLeft } from 'lucide-react';
 import { motion } from 'motion/react';
-import { auth, signInWithPopup, googleProvider, db, doc, getDoc, setDoc } from '@/firebase';
+import { auth, signInWithPopup, googleProvider, db, doc, getDoc, setDoc, signInWithEmailAndPassword } from '@/firebase';
 
 export default function LoginPage() {
   const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const handleEmailLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setLoading(true);
+      setError('');
+      await signInWithEmailAndPassword(auth, email, password);
+      router.push('/profile');
+    } catch (err: any) {
+      console.error(err);
+      setError('Erro ao fazer login. Verifique suas credenciais.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleGoogleLogin = async () => {
     try {
@@ -75,6 +92,41 @@ export default function LoginPage() {
               </div>
             )}
             
+            <form onSubmit={handleEmailLogin} className="space-y-4">
+              <input 
+                type="email" 
+                placeholder="E-mail" 
+                value={email} 
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full bg-black/40 border border-brand-wine/30 rounded-lg py-3 px-4 text-sm focus:border-brand-orange outline-none transition-all text-white"
+                required
+              />
+              <input 
+                type="password" 
+                placeholder="Senha" 
+                value={password} 
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full bg-black/40 border border-brand-wine/30 rounded-lg py-3 px-4 text-sm focus:border-brand-orange outline-none transition-all text-white"
+                required
+              />
+              <button 
+                type="submit"
+                disabled={loading}
+                className="w-full py-4 bg-brand-orange text-white font-black rounded-lg hover:scale-[1.02] transition-all uppercase tracking-widest text-sm disabled:opacity-50"
+              >
+                {loading ? 'ENTRANDO...' : 'ENTRAR'}
+              </button>
+            </form>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-brand-wine/30"></div>
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-brand-card px-2 text-gray-500">Ou</span>
+              </div>
+            </div>
+
             <button 
               onClick={handleGoogleLogin}
               disabled={loading}

@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { getFirestore, collection, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, onSnapshot, query, where, orderBy, limit, addDoc } from 'firebase/firestore';
 import firebaseConfig from './firebase-applet-config.json';
 
@@ -12,6 +12,8 @@ export {
   signInWithPopup,
   signOut,
   onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   collection,
   doc,
   setDoc,
