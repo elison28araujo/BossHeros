@@ -142,18 +142,18 @@ export default function AdminDashboard() {
   const handleApprove = async (id: string) => {
     try {
       await updateDoc(doc(db, 'recruits', id), { status: 'Aprovado' });
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      alert('Erro ao aprovar alistamento.');
+      alert(`Erro ao aprovar alistamento: ${error.message || error}`);
     }
   };
 
   const handleReject = async (id: string) => {
     try {
       await updateDoc(doc(db, 'recruits', id), { status: 'Reprovado' });
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      alert('Erro ao reprovar alistamento.');
+      alert(`Erro ao reprovar alistamento: ${error.message || error}`);
     }
   };
 
@@ -177,9 +177,9 @@ export default function AdminDashboard() {
     if (window.confirm('Tem certeza que deseja excluir este vídeo?')) {
       try {
         await deleteDoc(doc(db, 'videos', id));
-      } catch (error) {
+      } catch (error: any) {
         console.error(error);
-        alert('Erro ao excluir vídeo.');
+        alert(`Erro ao excluir vídeo: ${error.message || error}`);
       }
     }
   };
@@ -189,9 +189,9 @@ export default function AdminDashboard() {
       try {
         await deleteDoc(doc(db, 'recruits', id));
         alert('Alistamento excluído com sucesso.');
-      } catch (error) {
+      } catch (error: any) {
         console.error(error);
-        alert('Erro ao excluir alistamento.');
+        alert(`Erro ao excluir alistamento: ${error.message || error}`);
       }
     }
   };
@@ -201,9 +201,9 @@ export default function AdminDashboard() {
       try {
         await updateDoc(doc(db, 'users', userId), { approved: false, role: 'banned' });
         alert('Usuário banido com sucesso.');
-      } catch (error) {
+      } catch (error: any) {
         console.error(error);
-        alert('Erro ao banir usuário.');
+        alert(`Erro ao banir usuário: ${error.message || error}`);
       }
     }
   };
@@ -213,9 +213,9 @@ export default function AdminDashboard() {
       try {
         await deleteDoc(doc(db, 'users', userId));
         alert('Usuário excluído com sucesso.');
-      } catch (error) {
+      } catch (error: any) {
         console.error(error);
-        alert('Erro ao excluir usuário.');
+        alert(`Erro ao excluir usuário: ${error.message || error}`);
       }
     }
   };
@@ -224,9 +224,9 @@ export default function AdminDashboard() {
     try {
       const newRole = currentRole === 'admin' ? 'user' : 'admin';
       await updateDoc(doc(db, 'users', userId), { role: newRole });
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      alert('Erro ao atualizar permissões do usuário.');
+      alert(`Erro ao atualizar permissões do usuário: ${error.message || error}`);
     }
   };
 
