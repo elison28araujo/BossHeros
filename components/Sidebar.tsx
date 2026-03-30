@@ -95,12 +95,14 @@ const Sidebar = () => {
             SAIR DA CONTA
           </button>
         )}
-        <Link href="/recruitment" className="block">
-          <button className="w-full py-3 bg-brand-orange border border-brand-orange rounded text-white font-bold text-sm flex items-center justify-center gap-2 hover:scale-105 transition-all gamer-glow">
-            <UserPlus className="w-4 h-4" />
-            REALIZAR ALISTAMENTO
-          </button>
-        </Link>
+        {!isLoggedIn && (
+          <Link href="/recruitment" className="block">
+            <button className="w-full py-3 bg-brand-orange border border-brand-orange rounded text-white font-bold text-sm flex items-center justify-center gap-2 hover:scale-105 transition-all gamer-glow">
+              <UserPlus className="w-4 h-4" />
+              REALIZAR ALISTAMENTO
+            </button>
+          </Link>
+        )}
       </div>
 
       {/* Navigation Menu */}
