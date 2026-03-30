@@ -49,7 +49,7 @@ const Sidebar = () => {
     { name: 'Início', icon: Home, href: '/' },
     { name: 'Estatísticas CS', icon: BarChart2, href: '/stats' },
     { name: 'Vídeos', icon: Video, href: '/videos' },
-    { name: 'Meu Perfil', icon: UserCircle, href: '/profile' },
+    ...(isLoggedIn ? [{ name: 'Meu Perfil', icon: UserCircle, href: '/profile' }] : []),
     ...(isAdmin ? [{ name: 'Painel Admin', icon: Settings, href: '/admin' }] : []),
   ];
 
