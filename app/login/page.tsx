@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Shield, User, Lock, LogIn, ArrowLeft } from 'lucide-react';
 import { motion } from 'motion/react';
-import { auth, signInWithPopup, googleProvider, db, doc, getDoc, setDoc, signInWithEmailAndPassword } from '@/firebase';
+import { auth, signInWithPopup, googleProvider, db, doc, getDoc, setDoc, signInWithEmailAndPassword, signOut } from '@/firebase';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -19,12 +19,27 @@ export default function LoginPage() {
     try {
       setLoading(true);
       setError('');
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      
+      // Check if user exists in db
+      const userRef = doc(db, 'users', user.uid);
+      const userDoc = await getDoc(userRef);
+      
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        if (userData.approved === false) {
+          await signOut(auth);
+          setError('AGUARDANDO APROVAÇÃO DO ADMIN');
+          setLoading(false);
+          return;
+        }
+      }
+      
       router.push('/profile');
     } catch (err: any) {
       console.error(err);
       setError('Erro ao fazer login. Verifique suas credenciais.');
-    } finally {
       setLoading(false);
     }
   };
@@ -40,7 +55,15 @@ export default function LoginPage() {
       const userRef = doc(db, 'users', user.uid);
       const userDoc = await getDoc(userRef);
       
-      if (!userDoc.exists()) {
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        if (userData.approved === false) {
+          await signOut(auth);
+          setError('AGUARDANDO APROVAÇÃO DO ADMIN');
+          setLoading(false);
+          return;
+        }
+      } else {
         // Create user
         await setDoc(userRef, {
           uid: user.uid,
@@ -51,6 +74,9 @@ export default function LoginPage() {
           photoUrl: user.photoURL || '',
           createdAt: new Date().toISOString()
         });
+        setError('AGUARDANDO APROVAÇÃO DO ADMIN');
+        setLoading(false);
+        return;
       }
       
       router.push('/profile');
