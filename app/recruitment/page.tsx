@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Shield, User, Lock, ArrowRight, CheckCircle2, Phone, Sword, ShieldAlert, Users, Target, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { auth, db, collection, addDoc, onAuthStateChanged } from '@/firebase';
+import { auth, db, collection, addDoc, onAuthStateChanged, createUserWithEmailAndPassword, doc, setDoc } from '@/firebase';
 
 const StepIndicator = ({ currentStep }: { currentStep: number }) => (
   <div className="flex items-center justify-center gap-4 mb-12">
@@ -70,9 +70,27 @@ export default function RecruitmentPage() {
   const handleBack = () => setStep(s => Math.max(s - 1, 1));
 
   const handleSubmit = async () => {
-    if (!user) {
-      setError('Você precisa estar logado para se alistar. Vá para a página de login.');
-      return;
+    let currentUser = user;
+
+    if (!currentUser) {
+      // Try to create user if not logged in
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, `${formData.user}@bosssheras.com`, formData.password);
+        currentUser = userCredential.user;
+        
+        // Create user doc
+        await setDoc(doc(db, 'users', currentUser.uid), {
+          uid: currentUser.uid,
+          email: currentUser.email,
+          role: 'user',
+          displayName: formData.user,
+          createdAt: new Date().toISOString()
+        });
+      } catch (err: any) {
+        console.error("Erro ao criar conta:", err);
+        setError(`Erro ao criar conta: ${err.message}`);
+        return;
+      }
     }
     
     // Validate required fields
@@ -103,7 +121,7 @@ export default function RecruitmentPage() {
     
     try {
       await addDoc(collection(db, 'recruits'), {
-        userId: user.uid,
+        userId: currentUser.uid,
         user: formData.user,
         whatsapp: formData.whatsapp,
         charAttack: formData.charAttack,
