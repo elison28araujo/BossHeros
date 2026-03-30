@@ -184,16 +184,38 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleResetRecruits = async () => {
-    if (window.confirm('ATENÇÃO: Tem certeza que deseja apagar TODOS os alistamentos? Esta ação não pode ser desfeita.')) {
+  const handleDeleteRecruit = async (id: string) => {
+    if (window.confirm('Tem certeza que deseja excluir este alistamento?')) {
       try {
-        const querySnapshot = await getDocs(collection(db, 'recruits'));
-        const deletePromises = querySnapshot.docs.map(document => deleteDoc(doc(db, 'recruits', document.id)));
-        await Promise.all(deletePromises);
-        alert('Todos os alistamentos foram apagados com sucesso.');
+        await deleteDoc(doc(db, 'recruits', id));
+        alert('Alistamento excluído com sucesso.');
       } catch (error) {
         console.error(error);
-        alert('Erro ao apagar alistamentos.');
+        alert('Erro ao excluir alistamento.');
+      }
+    }
+  };
+
+  const handleBanUser = async (userId: string) => {
+    if (window.confirm('Tem certeza que deseja BANIR este usuário?')) {
+      try {
+        await updateDoc(doc(db, 'users', userId), { approved: false, role: 'banned' });
+        alert('Usuário banido com sucesso.');
+      } catch (error) {
+        console.error(error);
+        alert('Erro ao banir usuário.');
+      }
+    }
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    if (window.confirm('Tem certeza que deseja EXCLUIR este usuário? Esta ação não pode ser desfeita.')) {
+      try {
+        await deleteDoc(doc(db, 'users', userId));
+        alert('Usuário excluído com sucesso.');
+      } catch (error) {
+        console.error(error);
+        alert('Erro ao excluir usuário.');
       }
     }
   };
@@ -356,12 +378,24 @@ export default function AdminDashboard() {
                               {user.approved ? 'Sim' : 'Não'}
                             </button>
                           </td>
-                          <td className="px-6 py-4 text-right">
+                          <td className="px-6 py-4 text-right flex items-center justify-end gap-2">
                             <button 
                               onClick={() => handleToggleRole(user.id, user.role)}
                               className="text-xs font-bold text-brand-orange hover:text-white transition-all uppercase tracking-widest"
                             >
                               {user.role === 'admin' ? 'Remover Admin' : 'Tornar Admin'}
+                            </button>
+                            <button 
+                              onClick={() => handleBanUser(user.id)}
+                              className="text-xs font-bold text-yellow-500 hover:text-white transition-all uppercase tracking-widest"
+                            >
+                              Banir
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteUser(user.id)}
+                              className="text-xs font-bold text-red-500 hover:text-white transition-all uppercase tracking-widest"
+                            >
+                              Excluir
                             </button>
                           </td>
                         </tr>
@@ -431,6 +465,7 @@ export default function AdminDashboard() {
                             <div className="flex items-center justify-end gap-2">
                               <button onClick={() => handleApprove(recruit.id)} className="p-2 bg-green-900/20 text-green-500 rounded hover:bg-green-500 hover:text-white transition-all"><Check className="w-4 h-4" /></button>
                               <button onClick={() => handleReject(recruit.id)} className="p-2 bg-red-900/20 text-red-500 rounded hover:bg-red-500 hover:text-white transition-all"><X className="w-4 h-4" /></button>
+                              <button onClick={() => handleDeleteRecruit(recruit.id)} className="p-2 bg-gray-900/20 text-gray-500 rounded hover:bg-gray-500 hover:text-white transition-all"><X className="w-4 h-4" /></button>
                             </div>
                           </td>
                         </tr>
